@@ -1,0 +1,32 @@
+pipeline {
+
+    agent any
+
+    stages {
+        stage('Setup') {
+            steps {
+                git branch: 'jenkins', url: 'https://github.com/srcML/srcML.git'
+            }
+        }
+        stage('CMake') {
+            steps {
+                cmakeBuild buildDir: 'build', cmakeArgs: '-DBUILD_LIBSRCML_TESTS=ON', generator: 'Ninja', installation: 'cmake'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'cd build; ninja'
+            }
+        }
+        stage('Test') {
+            steps {
+                ctest arguments: '-R test_srcml', installation: 'cmake', workingDir: 'build'
+            }
+        }
+        stage('Package') {
+            steps {
+                cpack arguments: '-G DEB', installation: 'cmake', workingDir: 'build'
+            }
+        }
+    }
+}
